@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquisa de qualidade de imagem</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #faf7f4;
+    color: #3a3a3a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 14px rgba(0,0,0,.07);
+    padding: 28px 24px;
+    max-width: 860px;
+    width: 100%;
+  }
+  h1 { font-size: 1.35rem; margin-bottom: 12px; color: #6b4a3a; }
+  h2 { font-size: 1.1rem; margin-bottom: 16px; color: #6b4a3a; }
+  p { line-height: 1.55; margin-bottom: 12px; font-size: .98rem; }
+  .progresso { font-size: .85rem; color: #999; margin-bottom: 14px; letter-spacing: .04em; }
+  .par {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    margin: 18px 0 22px;
+  }
+  .lado { flex: 1; max-width: 380px; text-align: center; }
+  .lado img {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    cursor: zoom-in;
+    display: block;
+    background: #f3efe9;
+  }
+  .lado .rotulo { margin-top: 8px; font-weight: 600; font-size: .95rem; color: #555; }
+  .opcoes { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font-size: 1rem;
+    padding: 13px 26px;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    background: #6b4a3a;
+    color: #fff;
+    transition: background .15s;
+  }
+  button:hover { background: #573a2d; }
+  button.neutro { background: #e8e0d8; color: #4a3a30; }
+  button.neutro:hover { background: #dbD0c4; }
+  .btn-principal { background: #6b4a3a; color: #fff; font-size: 1.05rem; padding: 14px 34px; }
+  .centro { text-align: center; }
+  .discreto { margin-top: 26px; text-align: center; }
+  .discreto a { color: #bbb; font-size: .8rem; text-decoration: underline; cursor: pointer; }
+  .acoes-final { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+  .btn-zap { background: #25d366; color: #fff; }
+  .btn-zap:hover { background: #1da851; }
+  .btn-json { background: #e8e0d8; color: #4a3a30; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: .88rem; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
+  th { color: #6b4a3a; }
+  #zoom {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.88);
+    z-index: 50;
+    align-items: center; justify-content: center;
+    cursor: zoom-out;
+    padding: 20px;
+  }
+  #zoom img { max-width: 96%; max-height: 96%; border-radius: 6px; }
+  @media (max-width: 640px) {
+    .par { flex-direction: column; align-items: center; }
+    .lado { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="tela-inicio">
+  <h1>Pesquisa rápida de qualidade de imagem</h1>
+  <p>Oi! Estou testando uma melhoria técnica nas fotos do site e preciso do seu olhar de quem conhece os produtos.</p>
+  <p>Vou te mostrar <strong>5 fotos</strong>, cada uma em <strong>duas versões lado a lado</strong>. Para cada foto, me diga: <strong>qual versão tem a melhor qualidade?</strong> Se as duas parecerem iguais, pode marcar "Não vejo diferença", essa resposta também é muito importante.</p>
+  <p>Se quiser ver de pertinho, toque na imagem para ampliar. Não tem resposta certa ou errada, vale a sua percepção. Leva menos de 2 minutos.</p>
+  <div class="centro" style="margin-top:18px">
+    <button class="btn-principal" onclick="iniciar()">Começar</button>
+  </div>
+</div>
+
+<div class="card" id="tela-pergunta" style="display:none">
+  <div class="progresso" id="progresso"></div>
+  <h2>Qual imagem tem a melhor qualidade?</h2>
+  <div class="par">
+    <div class="lado" id="lado1">
+      <img id="imgA" alt="Imagem 1" onclick="ampliar(this.src)">
+      <div class="rotulo">Imagem 1</div>
+    </div>
+    <div class="lado" id="lado2">
+      <img id="imgB" alt="Imagem 2" onclick="ampliar(this.src)">
+      <div class="rotulo">Imagem 2</div>
+    </div>
+  </div>
+  <div class="opcoes">
+    <button onclick="responder(1)">Imagem 1</button>
+    <button onclick="responder(2)">Imagem 2</button>
+    <button class="neutro" onclick="responder(0)">Não vejo diferença</button>
+  </div>
+</div>
+
+<div class="card centro" id="tela-final" style="display:none">
+  <h1>Pronto, muito obrigado!</h1>
+  <p>Suas respostas foram registradas. Para eu receber o resultado, toque no botão verde abaixo: ele abre o WhatsApp com o resumo já preenchido, é só enviar.</p>
+  <div class="acoes-final">
+    <button class="btn-zap" onclick="enviarZap()">Enviar resultado pelo WhatsApp</button>
+    <button class="btn-json" onclick="baixarJSON()">Baixar resultado (arquivo)</button>
+    <button class="neutro" onclick="refazer()">Refazer o teste</button>
+  </div>
+  <div class="discreto"><a onclick="verPainel()">ver tentativas neste aparelho</a></div>
+</div>
+
+<div class="card" id="tela-painel" style="display:none">
+  <h1>Tentativas registradas neste aparelho</h1>
+  <div id="painel-conteudo"></div>
+  <div class="acoes-final">
+    <button class="btn-json" onclick="baixarJSON(true)">Baixar tudo (arquivo)</button>
+    <button class="neutro" onclick="voltar()">Voltar</button>
+  </div>
+</div>
+
+<div id="zoom" onclick="this.style.display='none'"><img id="zoom-img"></div>
+
+<script>
+// Versao "a" = original (JPEG q95). Versao "b" = otimizada (WebP q80).
+const FOTOS = [1, 2, 3, 4, 5];
+const ZAP = "5585992746113";
+const KEY = "ntbeauty_teste_cego_v1";
+
+let ordem = [];      // ordem[0] = versao mostrada como Imagem 1 ("a" ou "b")
+let atual = 0;
+let respostas = [];
+let inicioTs = null;
+
+function embaralha() {
+  ordem = FOTOS.map(() => Math.random() < 0.5 ? ["a", "b"] : ["b", "a"]);
+}
+
+function iniciar() {
+  embaralha();
+  atual = 0;
+  respostas = [];
+  inicioTs = new Date().toISOString();
+  mostra("tela-pergunta");
+  renderPergunta();
+}
+
+function renderPergunta() {
+  const n = FOTOS[atual];
+  document.getElementById("progresso").textContent = "Foto " + (atual + 1) + " de " + FOTOS.length;
+  const [v1, v2] = ordem[atual];
+  const a = document.getElementById("imgA");
+  const b = document.getElementById("imgB");
+  a.src = "img/foto" + n + "-" + v1 + "." + (v1 === "a" ? "jpg" : "webp");
+  b.src = "img/foto" + n + "-" + v2 + "." + (v2 === "a" ? "jpg" : "webp");
+}
+
+function responder(escolha) {
+  const n = FOTOS[atual];
+  const [v1, v2] = ordem[atual];
+  let versaoEscolhida = null;
+  if (escolha === 1) versaoEscolhida = v1;
+  if (escolha === 2) versaoEscolhida = v2;
+  respostas.push({ foto: n, escolha: escolha, versao: versaoEscolhida });
+  atual++;
+  if (atual < FOTOS.length) {
+    renderPergunta();
+  } else {
+    finalizar();
+  }
+}
+
+function finalizar() {
+  const tentativa = {
+    quando: inicioTs,
+    duracaoSeg: Math.round((Date.now() - new Date(inicioTs).getTime()) / 1000),
+    respostas: respostas
+  };
+  const hist = carregaHist();
+  hist.push(tentativa);
+  localStorage.setItem(KEY, JSON.stringify(hist));
+  mostra("tela-final");
+}
+
+function carregaHist() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+  catch (e) { return []; }
+}
+
+function descreve(r) {
+  if (r.escolha === 0) return "nao viu diferenca";
+  const qual = r.versao === "a" ? "ORIGINAL" : "OTIMIZADA";
+  return "escolheu a Imagem " + r.escolha + " (era a " + qual + ")";
+}
+
+function textoZap() {
+  const hist = carregaHist();
+  const t = hist[hist.length - 1];
+  const quando = new Date(t.quando).toLocaleString("pt-BR");
+  let linhas = ["Resultado do teste de qualidade de imagem (NT Beauty)",
+    "Tentativa " + hist.length + " - " + quando,
+    ""];
+  t.respostas.forEach(r => linhas.push("Foto " + r.foto + ": " + descreve(r)));
+  return linhas.join(String.fromCharCode(10));
+}
+
+function enviarZap() {
+  window.open("https://wa.me/" + ZAP + "?text=" + encodeURIComponent(textoZap()), "_blank");
+}
+
+function baixarJSON(tudo) {
+  const hist = carregaHist();
+  const dados = tudo ? hist : hist[hist.length - 1];
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "resultado-teste-imagem.json";
+  a.click();
+}
+
+function refazer() { iniciar(); }
+
+function verPainel() {
+  const hist = carregaHist();
+  const div = document.getElementById("painel-conteudo");
+  if (!hist.length) {
+    div.innerHTML = "<p>Nenhuma tentativa registrada neste aparelho ainda.</p>";
+  } else {
+    let html = "";
+    hist.forEach((t, i) => {
+      const quando = new Date(t.quando).toLocaleString("pt-BR");
+      html += "<h2 style='margin-top:18px'>Tentativa " + (i + 1) + " - " + quando + "</h2><table><tr><th>Foto</th><th>Resposta</th></tr>";
+      t.respostas.forEach(r => {
+        html += "<tr><td>Foto " + r.foto + "</td><td>" + descreve(r) + "</td></tr>";
+      });
+      html += "</table>";
+    });
+    div.innerHTML = html;
+  }
+  mostra("tela-painel");
+}
+
+function voltar() { mostra("tela-final"); }
+
+function ampliar(src) {
+  document.getElementById("zoom-img").src = src;
+  document.getElementById("zoom").style.display = "flex";
+}
+
+function mostra(id) {
+  ["tela-inicio", "tela-pergunta", "tela-final", "tela-painel"].forEach(t => {
+    document.getElementById(t).style.display = (t === id) ? "block" : "none";
+  });
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
