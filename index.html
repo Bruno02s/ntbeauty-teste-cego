@@ -169,8 +169,8 @@ function renderPergunta() {
   const [v1, v2] = ordem[atual];
   const a = document.getElementById("imgA");
   const b = document.getElementById("imgB");
-  a.src = "img/foto" + n + "-" + v1 + "." + (v1 === "a" ? "jpg" : "webp");
-  b.src = "img/foto" + n + "-" + v2 + "." + (v2 === "a" ? "jpg" : "webp");
+  a.src = "img/foto" + n + "-" + v1 + "." + (v1 === "a" ? "jpg" : "webp") + "?v=2";
+  b.src = "img/foto" + n + "-" + v2 + "." + (v2 === "a" ? "jpg" : "webp") + "?v=2";
 }
 
 function responder(escolha) {
